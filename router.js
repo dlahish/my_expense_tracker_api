@@ -1,0 +1,125 @@
+const jwt = require('jwt-simple');
+const passport = require('passport');
+const initPassport = require('./services/passport');
+// initPassport(passport);
+const config = require('./config');
+
+var requireAuth = function (req, res, next) {
+  // if user is authenticated in the session, call the next() to call the next request handler
+  // Passport adds this method to request object. A middleware is allowed to add properties to
+  // request and response objects
+  if (req.isAuthenticated())
+    return next();
+  // if the user is not authenticated then redirect him to the login page
+  res.redirect('/');
+}
+
+module.exports = function(app) {
+
+  function tokenForUser(user) {
+    const timestamp = new Date().getTime();
+    return jwt.encode({ sub: user.id, iat: timestamp }, config.secret);
+  }
+
+  const db = require('./services/mongod');
+
+  const multer = require('multer');
+  var storage =   multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(null, './uploads');
+    },
+    filename: function (req, file, callback) {
+      callback(null, file.originalname);
+      //callback(null, file.fieldname + '-' + Date.now());
+    }
+  });
+
+  function tokenForUser(user) {
+    const timestamp = new Date().getTime();
+    return jwt.encode({ sub: user.id, iat: timestamp }, config.secret);
+  }
+
+  var upload = multer({ storage : storage });
+  const fs = require('fs');
+
+  const requireAuth = passport.authenticate('jwt', { session: false });
+
+  app.get('/', requireAuth, function(req, res) {
+    res.send({ message: 'this is a secure path with a message from the API server' });
+  });
+
+  app.post('/signup', function(req, res, next) {
+    passport.authenticate('signup', function(err, user, info) {
+      if (err) { return (err); }
+      if (!user) { return res.send({ message: info.message }); }
+      res.json({ token: tokenForUser(user) });
+    })(req, res, next);
+  });
+
+  app.post('/signin', function(req, res, next){
+    passport.authenticate('signin', function(err, user, info) {
+      if (err) { return (err); }
+      if (!user) { return res.send({ message: info.error }); }
+      if (user.error) { return res.send({ message: 'Invalid password.' }); }
+      res.json({ token: tokenForUser(user) });
+    })(req, res, next);
+  });
+
+
+  // app.post('/signin', passport.authenticate('login', {
+	// 	// successRedirect: '/home',
+	// 	// failureRedirect: '/err',
+	// 	failureFlash : true
+	// }), function(req, res) {
+  //   console.log(req);
+  //   var mmm = req.flash('message');
+  //   res.send({ message: mmm });
+  // });
+
+  app.get('/err', function(req, res) {
+    	// Display the Login page with any flash message, if any
+		res.send({ message: 'message' });
+	});
+
+  app.get('/home', function(req, res) {
+    	// Display the Login page with any flash message, if any
+		res.send({ message: 'message' });
+	});
+
+  app.get('/getemail', requireAuth, function(req, res) {
+    var userEmail = req.user.email;
+    res.send({ email: userEmail });
+  });
+
+  app.post('/getdata', requireAuth, db.getDataByDate);
+
+  app.get('/gettotal', requireAuth, db.getTotal);
+
+  app.post('/upload', upload.single('file'), requireAuth, db.saveFileToMongo);
+
+  app.post('/getmonthstotal', requireAuth, db.getMonthsTotal);
+
+  app.post('/addnewcategory', requireAuth, db.newCategory);
+
+  app.get('/fetchcategories', requireAuth, db.fetchCategories);
+
+  app.post('/deletecategory', requireAuth, db.deleteCategory);
+
+  app.post('/addrecord', requireAuth, db.addRecord);
+
+  app.post('/deleterecord', requireAuth, db.deleteRecord);
+
+  app.post('/signin', function(req, res, next){
+    if (!req.body.email) {
+      return res.send({ message: 'No user supplied' });
+    }
+    passport.authenticate('local', function(err, user, info) {
+      if (err) { return (err); }
+      if (!user) { return res.send({ message: 'Bad login info' }); }
+      if (user.error) { return res.send({ message: 'Invalid password' }); }
+      res.send( { token: tokenForUser(user) });
+    })(req, res, next);
+  });
+
+  // app.post('/signup', Authentication.signup);
+}
