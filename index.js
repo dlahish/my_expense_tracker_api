@@ -12,7 +12,7 @@ const passport = require('passport');
 
 var uristring =
   process.env.MONGODB_URI ||
-  'mongodb://localhost/spending';
+  'mongodb://localhost:spending/spending';
 // mongoose.connect('mongodb://localhost:spending/spending');
 const port = process.env.PORT || 3090;
 mongoose.connect(uristring, function (err, res) {
@@ -34,7 +34,7 @@ var allowCrossDomain = function(req, res, next) {
     }
 };
 
-app.use(morgan('combined'));
+// app.use(morgan('combined'));
 // app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.json());
