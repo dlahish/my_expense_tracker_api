@@ -108,7 +108,7 @@ exports.newCategory = function(req, res) {
   const userId = req.user._id;
   User.findByIdAndUpdate(userId,
     {
-      $push: { categories: req.body.category }
+      $push: { categories: {name: req.body.category.name, type: req.body.category.type} }
     },
     function(err) {
       if (err) {
