@@ -9,7 +9,8 @@ const dataSchema = new Schema({
   date: Date,
   category: String,
   amount: Number,
-  notes: String
+  notes: String,
+  type: String
 });
 
 const userSchema = new Schema({
