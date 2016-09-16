@@ -60,7 +60,8 @@ exports.addRecord = function(req, res) {
     date: req.body.date,
     category: req.body.category,
     amount: req.body.amount,
-    notes: req.body.notes
+    notes: req.body.notes,
+    type: req.body.type
   });
   newData.save(function(err, nd){
     if (err) {
