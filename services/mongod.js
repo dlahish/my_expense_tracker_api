@@ -87,7 +87,8 @@ exports.addRecord = function(req, res) {
 
 exports.deleteCategory = function(req, res) {
   const userId = req.user._id;
-  User.findByIdAndUpdate(userId, { $pullAll: { categories: [req.body.category] } }, function(err) {
+  User.findByIdAndUpdate(userId,
+    { $pull: { categories: {type: req.body.category.type, name: req.body.category.name } } }, function(err) {
     if (err) {
       console.log(err);
       return res.send({ error: err});
