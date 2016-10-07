@@ -14,11 +14,6 @@ exports.updateTransaction = function(req, res) {
   const userId = req.user._id,
         email = req.user.email,
         transaction = req.body.transaction
-  console.log('TRANSACTION TO UPDATE ----------------')
-  console.log(transaction)
-  console.log(transaction._id)
-  console.log(transaction.amount)
-  console.log(transaction.category)
   Data.findOneAndUpdate({_id: ObjectId(transaction._id), user: ObjectId(userId)},
     { amount: transaction.amount,
       category: transaction.category,
