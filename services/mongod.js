@@ -10,14 +10,27 @@ const Data = models.Data;
 
 var existsEntries = 0;
 
+exports.updateTransaction = function(req, res) {
+  const userId = req.user._id,
+        email = req.user.email,
+        transaction = req.body.transaction
+  Data.findOneAndUpdate({_id: ObjectId(transaction._id), user: ObjectId(userId)},
+    { amount: transaction.amount,
+      category: transaction.category,
+      date: transaction.date,
+      notes: transaction.notes,
+      type: transaction.type },
+    function(err, updatedTransaction) {
+      if (err) { return res.send({ error: err })}
+      return res.send({ message: "transaction was Updated"})
+    })
+}
+
 exports.deleteRecord = function(req, res) {
   const userId = req.user._id;
   const email = req.user.email;
-  console.log('DELETE RECORD -------');
-  console.log(req.body);
   Data.findOneAndRemove({ _id: ObjectId(req.body.idToDelete), user: ObjectId(userId) }, function(err, delRecord){
     if (err) {
-      console.log(err);
       return res.send({ error: err});
     }
     // res.send({ messgae: delRecord + ' was deleted.'});
@@ -52,9 +65,6 @@ exports.deleteRecord = function(req, res) {
 
 exports.addRecord = function(req, res) {
   const userId = req.user._id;
-  console.log('REQ BODY -----');
-  console.log(req.user);
-  console.log(req.body);
   const newData = new Data({
     user: userId,
     date: req.body.date,
@@ -65,7 +75,6 @@ exports.addRecord = function(req, res) {
   });
   newData.save(function(err, nd){
     if (err) {
-      console.log(err);
       return res.send({ error: err});
     }
     var incomeTemp = 0, expenseTemp = 0;
@@ -90,7 +99,6 @@ exports.deleteCategory = function(req, res) {
   User.findByIdAndUpdate(userId,
     { $pull: { categories: {type: req.body.category.type, name: req.body.category.name } } }, function(err) {
     if (err) {
-      console.log(err);
       return res.send({ error: err});
     }
     res.send({ message: 'Category was deleted.'});
@@ -114,7 +122,6 @@ exports.newCategory = function(req, res) {
     },
     function(err) {
       if (err) {
-        console.log(err);
         return res.send({ error: 'Something went wrong with push new category.'})
       }
       res.send({ message: 'Category was saved.' });
@@ -142,10 +149,6 @@ exports.getMonthsTotal = function(req, res) {
   var monthStart;
   var monthEnd;
   var yearArray = [];
-  // monthStart = moment(1 + '/' + i + '/' + year, "DD/MM/YYYY");
-  console.log('MONTH START------------');
-  console.log(typeof year);
-  console.log(year);
 
   function asyncLoop(iterations, func, callback) {
     var index = 1;
@@ -209,8 +212,6 @@ exports.getMonthsTotal = function(req, res) {
       var monthExpenses = 0;
       getMonth(2016, j, function(data){
 
-
-        console.log('DATA FROM  MONGO -----');
         data.map((d) => {
           if (!d.amount) {
             yearArray.push([0,0]);
@@ -221,15 +222,12 @@ exports.getMonthsTotal = function(req, res) {
               monthExpenses += d.amount;
           }
         });
-        console.log('AFTER MAPPING ------');
+
         yearArray.push({ income: monthIncome, expenses: monthExpenses });
-        // console.log(yearArray);
-        // console.log(j);
+
         loop.next();
       })},
     function(yearArray){
-      console.log('cycle ended');
-      console.log(yearArray);
       if (!yearArray) {
           res.send({ message: 'Something went wrong.'});
       } else {
@@ -310,7 +308,6 @@ exports.saveFileToMongo = function(req, res) {
       if (typeof tempAmount === 'number' ) {
         Data.findOne({ user: userId, amount: tempAmount, date: tempDate }, function(err, dData) {
           if (err) {
-            console.log('err');
             processing--;
             done = true;
             save = false;
@@ -318,7 +315,6 @@ exports.saveFileToMongo = function(req, res) {
           }
           else {
             if (dData) {
-              console.log('Data already exists.');
               processing--;
               finished();
             }
@@ -335,22 +331,19 @@ exports.saveFileToMongo = function(req, res) {
                 });
                 newData.save(function(err, nd) {
                   if (err) { console.log(err); }
-                  console.log('data was saved');
                   var incomeTemp = 0;
                   var expenseTemp = 0;
-                  console.log(nd.amount);
                   if (nd.amount > 0) {
                     incomeTemp = nd.amount;
                   } else if (nd.amount < 0) {
                     expenseTemp = nd.amount;
                   }
-                  console.log('incomeTemp  ----' + incomeTemp)
                   User.findByIdAndUpdate(userId,
                     {
                       $push: { data: nd },
                       $inc: { totalIncome: incomeTemp, totalExpense: expenseTemp }
                     }, function(err){
-                    if (err) { console.log('err-------------'); }
+                    if (err) { console.log('err'); }
                   });
                 });
                 newEntries++;
@@ -361,18 +354,14 @@ exports.saveFileToMongo = function(req, res) {
           }
         });
       } else {
-          console.log('not a valid input');
           processing--;
           finished();
       };
     })
     .on('end', function(){
-      console.log('read finished');
       fs.unlink(path, function(err) {
         if (err) { throw err; }
       });
-      console.log('processing');
-      console.log(processing);
       done = true;
       finished();
     });
