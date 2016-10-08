@@ -33,35 +33,52 @@ exports.deleteRecord = function(req, res) {
     if (err) {
       return res.send({ error: err});
     }
-    // res.send({ messgae: delRecord + ' was deleted.'});
-    var thisMonth = moment().month();
-    const nextMonth = thisMonth + 1;
-    var thisYear = moment().year();
-    const startMonth = moment('01/'+thisMonth+'/'+thisYear, "DD/M/YYYY");
-    const endMonth = moment('01/'+nextMonth+'/'+thisYear, "DD/M/YYYY");
-    Data.find({ user: userId, date: { $gt: startMonth, $lte: endMonth } }, function(err, data){
-      if (err) { console.log(err); }
-      if (!data) {
-        return res.send('No data found');
+    User.findByIdAndUpdate(userId,
+      { $pull: { data: {_id: ObjectId(req.body.idToDelete) } } }, function(err) {
+      if (err) {
+        return res.send({ error: err});
       }
-      var searchTotalIncome = 0;
-      var searchTotalExpenses = 0;
-      data.map((d) => {
-        if (d.amount > 0) {
-          searchTotalIncome += d.amount;
-        } else {
-          searchTotalExpenses += d.amount;
-        }
-      });
-      res.send({
-        data: data,
-        searchTotalIncome: searchTotalIncome,
-        searchTotalExpenses: searchTotalExpenses,
-        messgae: delRecord + ' was deleted.'
-      });
-    });
-  });
+      res.send({ message: 'Transaction was deleted'});
+    })
+  }
 }
+
+// exports.deleteRecord = function(req, res) {
+//   const userId = req.user._id;
+//   const email = req.user.email;
+//   Data.findOneAndRemove({ _id: ObjectId(req.body.idToDelete), user: ObjectId(userId) }, function(err, delRecord){
+//     if (err) {
+//       return res.send({ error: err});
+//     }
+//     // res.send({ messgae: delRecord + ' was deleted.'});
+//     var thisMonth = moment().month();
+//     const nextMonth = thisMonth + 1;
+//     var thisYear = moment().year();
+//     const startMonth = moment('01/'+thisMonth+'/'+thisYear, "DD/M/YYYY");
+//     const endMonth = moment('01/'+nextMonth+'/'+thisYear, "DD/M/YYYY");
+//     Data.find({ user: userId, date: { $gt: startMonth, $lte: endMonth } }, function(err, data){
+//       if (err) { console.log(err); }
+//       if (!data) {
+//         return res.send('No data found');
+//       }
+//       var searchTotalIncome = 0;
+//       var searchTotalExpenses = 0;
+//       data.map((d) => {
+//         if (d.amount > 0) {
+//           searchTotalIncome += d.amount;
+//         } else {
+//           searchTotalExpenses += d.amount;
+//         }
+//       });
+//       res.send({
+//         data: data,
+//         searchTotalIncome: searchTotalIncome,
+//         searchTotalExpenses: searchTotalExpenses,
+//         messgae: delRecord + ' was deleted.'
+//       });
+//     });
+//   });
+// }
 
 exports.addRecord = function(req, res) {
   const userId = req.user._id;
