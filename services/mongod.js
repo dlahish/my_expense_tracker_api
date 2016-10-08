@@ -14,7 +14,7 @@ exports.updateTransaction = function(req, res) {
   const userId = req.user._id,
         email = req.user.email,
         transaction = req.body.transaction
-  Data.findOneAndUpdate({_id: ObjectId(transaction._id), user: ObjectId(userId)},
+  Data.findOneAndUpdate({ _id: ObjectId(transaction._id), user: ObjectId(userId)},
     { amount: transaction.amount,
       category: transaction.category,
       date: transaction.date,
@@ -33,14 +33,14 @@ exports.deleteRecord = function(req, res) {
     if (err) {
       return res.send({ error: err});
     }
-    User.findByIdAndUpdate(userId,
-      { $pull: { data: {_id: ObjectId(req.body.idToDelete) } } }, function(err) {
+    User.findOneAndUpdate({ _id: ObjectId(userId)},
+      { $pull: { data: ObjectId(req.body.idToDelete) } }, function(err) {
       if (err) {
         return res.send({ error: err});
       }
       res.send({ message: 'Transaction was deleted'});
     })
-  }
+  })
 }
 
 // exports.deleteRecord = function(req, res) {
