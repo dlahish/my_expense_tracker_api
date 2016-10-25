@@ -10,6 +10,33 @@ const Data = models.Data;
 
 var existsEntries = 0;
 
+exports.updateCollection = function(req, res) {
+  const userId = req.user._id
+  var newCollection = req.body.transactions
+  newCollection.forEach((d) => d.user = userId)
+  Data.remove({user: ObjectId(userId)}, function(err) {
+   if (err) {
+     console.log('error', err)
+     res.send(err)
+   }
+   Data.insertMany(newCollection, function(err, docs) {
+     if (err) {
+       console.log('error', err)
+     }
+     res.send({ transactions: docs })
+   })
+  })
+}
+
+exports.createCsv = function(req, res) {
+  csv
+   .writeToPath("./tmp/my.csv", req.body , {headers: true})
+   .on("finish", function(){
+       console.log("done!");
+       res.send({ message: 'created csv'})
+   });
+}
+
 exports.updateTransaction = function(req, res) {
   const userId = req.user._id,
         email = req.user.email,
