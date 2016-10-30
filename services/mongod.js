@@ -15,16 +15,18 @@ exports.updateCollection = function(req, res) {
   var newCollection = req.body.transactions
   newCollection.forEach((d) => d.user = userId)
   Data.remove({user: ObjectId(userId)}, function(err) {
-   if (err) {
+    if (err) {
      console.log('error', err)
      res.send(err)
-   }
-   Data.insertMany(newCollection, function(err, docs) {
+    }
+
+    Data.insertMany(newCollection, function(err, docs) {
      if (err) {
        console.log('error', err)
+       res.send({ err })
      }
      res.send({ transactions: docs })
-   })
+    })
   })
 }
 
